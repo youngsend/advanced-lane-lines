@@ -11,12 +11,14 @@ def show_two_images(img, dst, left_title='', right_title=''):
     plt.show()
 
 
-def show_four_images(imgs):
+def show_four_images(imgs, titles=None):
+    if titles is None:
+        titles = ['undistorted image', 'mask', 'warped_mask', 'lane line fitting']
     f, axes = plt.subplots(2, 2, figsize=(24, 9))
-    plot_on_axis(axes[0, 0], imgs[0], 'undistorted image')
-    plot_on_axis(axes[0, 1], imgs[1], 'mask')
-    plot_on_axis(axes[1, 0], imgs[2], 'warped mask')
-    plot_on_axis(axes[1, 1], imgs[3], 'lane line fitting')
+    plot_on_axis(axes[0, 0], imgs[0], titles[0])
+    plot_on_axis(axes[0, 1], imgs[1], titles[1])
+    plot_on_axis(axes[1, 0], imgs[2], titles[2])
+    plot_on_axis(axes[1, 1], imgs[3], titles[3])
     plt.show()
 
 
