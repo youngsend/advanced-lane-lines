@@ -1,5 +1,8 @@
-from camera_calibration import *
+import cv2
+import matplotlib.pyplot as plt
 
+from camera_calibration import *
+from utility import *
 
 class Pipeline:
     def __init__(self):
@@ -29,46 +32,36 @@ class Pipeline:
         self.margin = 100  # Set the width of the windows +/- margin
 
         # radius and center offset
-        self.ym_per_pix = 30 / 720  # meters per pixel in y dimension
-        self.xm_per_pix = 3.7 / 700  # meters per pixel in x dimension
+        self.ym_per_pix = 35 / 720  # meters per pixel in y dimension
+        self.xm_per_pix = 3.7 / 600  # meters per pixel in x dimension
 
     def process(self, img):
         """pipeline function with whole steps."""
         undistorted = self.camera_calibrator.undistort(img=img)
-        _, mask, _, _ = self.threshold(undistorted)
+        mask = self.threshold(undistorted)
         warped_mask = self.warp_img(mask)
         fitted = self.fit_polynomial(warped_mask)
         final = self.visualize_ego_lane(undistorted, self.left_fit, self.right_fit)
-        return mask, warped_mask, fitted, final
+        return undistorted, mask, warped_mask, fitted, final
 
-    def threshold(self, img, g_thresh=(30, 100), s_thresh=(150, 255)):
-        """Use sobel gradient threshold and saturation channel threshold to find edges."""
-        img = np.copy(img)
-        # Convert to HLS color space and separate the V channel
-        hls = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
-        l_channel = hls[:, :, 1]
-        s_channel = hls[:, :, 2]
+    @staticmethod
+    def threshold(img):
+        """use hls threshold to get white and yellow pixel mask.
+        this function refers to https://github.com/naokishibuya/car-finding-lane-lines
+        """
+        # when used to process video, RGB2HLS; when used to process cv2 image, BGR2HLS
+        hls = cv2.cvtColor(img, cv2.COLOR_BGR2HLS)
+        # white mask
+        lower = np.uint8([0, 200, 0])
+        upper = np.uint8([255, 255, 255])
+        white_mask = cv2.inRange(hls, lower, upper)
 
-        # Sobel x
-        sobelx = cv2.Sobel(l_channel, cv2.CV_64F, 1, 0)  # Take the derivative in x
-        abs_sobelx = np.absolute(sobelx)  # Absolute x derivative to accentuate lines away from horizontal
-        scaled_sobel = np.uint8(255 * abs_sobelx / np.max(abs_sobelx))
-
-        # Threshold x gradient
-        sxbinary = np.zeros_like(scaled_sobel)
-        sxbinary[(scaled_sobel >= g_thresh[0]) & (scaled_sobel <= g_thresh[1])] = 1
-
-        # Threshold color channel
-        s_binary = np.zeros_like(s_channel)
-        s_binary[(s_channel >= s_thresh[0]) & (s_channel <= s_thresh[1])] = 1
-
-        # Stack each channel
-        color_binary = np.dstack((np.zeros_like(sxbinary), sxbinary, s_binary)) * 255
-
-        # Get mask
-        mask = np.zeros_like(s_channel)
-        mask[(sxbinary == 1) | (s_binary == 1)] = 1
-        return sxbinary, mask, s_binary, s_binary
+        # yellow mask
+        lower = np.uint8([10, 0, 70])
+        upper = np.uint8([60, 255, 255])
+        yellow_mask = cv2.inRange(hls, lower, upper)
+        mask = cv2.bitwise_or(white_mask, yellow_mask)
+        return mask
 
     def warp_img(self, img):
         warped = cv2.warpPerspective(src=img, M=self.perspective_M,
