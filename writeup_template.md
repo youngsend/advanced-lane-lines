@@ -26,49 +26,49 @@ The goals / steps of this project are the following:
 
 #### 2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image.  Provide an example of a binary image result.
 
-- the code is in `threshold()` function in `src/pipeline.py`.
+- the code is in `threshold()` function in `src/pipeline.py` (line 45~62).
 - I transferred BGR image to HLS color space and use two HLS channel range to find yellow and white pixels. I referred to this blog https://naokishibuya.medium.com/finding-lane-lines-on-the-road-30cf016a1165.
-- The results of (a) undistorted original image, (b) thresholded binary image, (c) perspective transformed binary image with fitted polynomial plotted, and (d) final image with ego lane warped back and radius, car offset displayed.
+- The results (including (a) undistorted original image, (b) thresholded binary image, (c) perspective transformed binary image with fitted polynomial plotted, and (d) final image with ego lane warped back and radius, car offset displayed) are in [Pipeline results for test images](#pipeline-results-for-test-images) part.
 
 #### 3. Describe how (and identify where in your code) you performed a perspective transform and provide an example of a transformed image.
 
-The code for my perspective transform includes a function called `warper()`, which appears in lines 1 through 8 in the file `example.py` (output_images/examples/example.py) (or, for example, in the 3rd code cell of the IPython notebook).  The `warper()` function takes as inputs an image (`img`), as well as source (`src`) and destination (`dst`) points.  I chose the hardcode the source and destination points in the following manner:
+- the perspective transform code includes `warp_img()` and `warp_img_back()` functions in `pipeline.py` (line 64~72).
 
-```python
-src = np.float32(
-    [[(img_size[0] / 2) - 55, img_size[1] / 2 + 100],
-    [((img_size[0] / 6) - 10), img_size[1]],
-    [(img_size[0] * 5 / 6) + 60, img_size[1]],
-    [(img_size[0] / 2 + 55), img_size[1] / 2 + 100]])
-dst = np.float32(
-    [[(img_size[0] / 4), 0],
-    [(img_size[0] / 4), img_size[1]],
-    [(img_size[0] * 3 / 4), img_size[1]],
-    [(img_size[0] * 3 / 4), 0]])
-```
-
-This resulted in the following source and destination points:
+- the source and destination points I used are:
 
 |  Source   | Destination |
 | :-------: | :---------: |
-| 585, 460  |   320, 0    |
-| 203, 720  |  320, 720   |
-| 1127, 720 |  960, 720   |
-| 695, 460  |   960, 0    |
+| 197, 720  |  340, 720   |
+| 592, 450  |   340, 0    |
+| 688, 450  |   940, 0    |
+| 1118, 720 |  940, 720   |
 
-I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image.
-
-![alt text][image4]
+- the result is like this: ![](output_images/perspective_transform.png)
 
 #### 4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
 
-
+- The code includes `find_lane_pixels_sliding_window()` (line 74~158, to take lane pixels), `fit_polynomial()` (line 160~180) and `find_lane_pixels_around_poly()` (line 196~224, to collect lane pixels around the fitted polynomial).
+- I use sliding window method to cluster left and right lane line pixels and fit a polynomial on them. 
+- From the second frame, pixels around the lane line polynomial from last frame are collected and fitted to polynomial again.
+  - Because this can deal with the project video right now, I have not implement the lane line tracking and sanity check.
+- The results are in [Pipeline results for test images](#pipeline-results-for-test-images) part.
 
 #### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
 
+- The code is `measure_curvature_real()` (line 272~296) in `pipeline.py`. Polynomial pixels are converted to meters and radius is calculated as follows (`left_fit_cr, right_fit_cr` are polynomial coefficients in meter unit.): 
 
+  ```python
+  left_curverad = (1 + (2 * left_fit_cr[0] * y_eval + left_fit_cr[1]) ** 2) ** (3 / 2) / abs(
+              2 * left_fit_cr[0])
+  right_curverad = (1 + (2 * right_fit_cr[0] * y_eval + right_fit_cr[1]) ** 2) ** (3 / 2) / abs(
+              2 * right_fit_cr[0])
+  ```
+
+- the position of the vehicle with respect to center is calculated as the difference between the image bottom center and average position of left and right lane line's start points, which is then converted to meter unit.
 
 #### 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
+
+- the final results are shown as follows.
 
 ---
 
