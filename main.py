@@ -1,6 +1,4 @@
-from pipeline import *
-from utility import *
-from video_processor import *
+from src.video_processor import *
 
 # processor = Pipeline()
 # img = cv2.imread('test_images/test5.jpg')

@@ -1,5 +1,5 @@
 from moviepy.editor import VideoFileClip
-from pipeline import *
+from src.pipeline import *
 
 
 class VideoProcessor:

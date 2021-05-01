@@ -1,8 +1,6 @@
-import cv2
-import matplotlib.pyplot as plt
+from src.camera_calibration import *
+from src.utility import *
 
-from camera_calibration import *
-from utility import *
 
 class Pipeline:
     def __init__(self):
