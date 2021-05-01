@@ -55,8 +55,8 @@ class Pipeline:
         white_mask = cv2.inRange(hls, lower, upper)
 
         # yellow mask
-        lower = np.uint8([10, 0, 70])
-        upper = np.uint8([60, 255, 255])
+        lower = np.uint8([10, 0, 100])
+        upper = np.uint8([40, 255, 255])
         yellow_mask = cv2.inRange(hls, lower, upper)
         mask = cv2.bitwise_or(white_mask, yellow_mask)
         return mask
